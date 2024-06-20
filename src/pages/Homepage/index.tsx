@@ -206,7 +206,7 @@ const Homepage = () => {
 
         <h2 className="text-2xl font-bold">
           {mostVisitedArticles.length
-            ? "Most Visited Article"
+            ? "Article of the day"
             : "There's no article saved yet"}
         </h2>
         {mostVisitedArticles.map((article, index) => (
@@ -221,7 +221,7 @@ const Homepage = () => {
                     href={article.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="col-span-3"
+                    className="col-span-3  text-blue-600 mt-2"
                   >
                     {article.url}
                   </a>
