@@ -39,6 +39,7 @@ const Article = () => {
   const [newRowKey, setNewRowKey] = useState("");
   const [newRowValue, setNewRowValue] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
+
   const navigate = useNavigate();
   const {
     isOpen: isTableModalOpen,
@@ -114,46 +115,6 @@ const Article = () => {
     }
   };
 
-  const saveTable = async () => {
-    try {
-      if (article && tableIndex !== -1) {
-        const updatedArticle = { ...article };
-
-        if (
-          updatedArticle.paragraphs &&
-          updatedArticle.paragraphs[tableIndex] &&
-          updatedArticle.paragraphs[tableIndex].tables !== undefined
-        ) {
-          const tableToUpdate =
-            updatedArticle.paragraphs[tableIndex].tables![0];
-
-          if (tableToUpdate) {
-            tableToUpdate.rows = tableRows;
-
-            await axios.put(
-              `${VITE_BACKEND_URL}/api/articles/${title}`,
-              updatedArticle
-            );
-
-            setArticle(updatedArticle);
-            setTableIndex(-1);
-            onTableModalClose();
-          } else {
-            setError(
-              "Table index is out of bounds or tables array is not properly initialized."
-            );
-            return;
-          }
-        } else {
-          setError("Table property is missing or undefined.");
-        }
-      }
-    } catch (error) {
-      console.error("Error saving table:", error);
-      setError("An error occurred while saving the table.");
-    }
-  };
-
   const deleteTableRow = (key: string) => {
     const updatedRows = { ...tableRows };
     delete updatedRows[key];
@@ -161,35 +122,15 @@ const Article = () => {
   };
 
   const addTableRow = (key: string, value: string) => {
-    if (tableRows[key] !== null) {
-      const updatedRows = { ...tableRows };
-      updatedRows[key] = [value];
-      setTableRows(updatedRows);
-    } else {
-      setTableRows((prevRows) => ({
-        ...prevRows,
-        [key]: [value],
-      }));
-    }
-  };
-
-  const handleEditTable = (table: ITable | undefined, index: number) => {
-    if (table) {
-      const convertedRows: { [key: string]: string[] } = {};
-      Object.entries(table.rows).forEach(([key, values]) => {
-        convertedRows[key] = values.map((value) =>
-          typeof value === "string" ? value : JSON.stringify(value)
-        );
-      });
-
-      setTableRows(convertedRows);
-      setTableIndex(index);
-      onTableModalOpen();
-    }
+    setTableRows((prevRows) => ({
+      ...prevRows,
+      [key]: [value],
+    }));
   };
 
   const renderParagraphs = (paragraphs: IParagraph[]) => {
     if (!paragraphs) return null;
+
     return paragraphs.map((paragraph, index) => (
       <div key={index} className="my-5 mt-5" id={`paragraph-${index}`}>
         <Header level={paragraph.level}>{paragraph.title}</Header>
@@ -227,7 +168,7 @@ const Article = () => {
               {renderTable(table)}
               <button
                 className="bg-transparent text-blue-700 hover:underline font-semibold py-1 px-1 ml-2"
-                onClick={() => handleEditTable(table, index)}
+                onClick={() => handleEditTable(index, tblIndex)}
               >
                 [Edit Table]
               </button>
@@ -272,7 +213,6 @@ const Article = () => {
         id: `paragraph-${idx}`,
       });
     });
-
     return (
       <ul className="list-none pl-0">
         {indices.map((item, idx) => (
@@ -321,6 +261,76 @@ const Article = () => {
     );
   };
 
+  const handleEditTable = (paraIndex: number, tblIndex: number) => {
+  if (article && article.paragraphs && article.paragraphs.length > paraIndex && paraIndex !== -1) {
+    const paragraph = article.paragraphs[paraIndex];
+
+    if (paragraph.tables && paragraph.tables.length > tblIndex && tblIndex !== -1) {
+      const table = paragraph.tables[tblIndex];
+
+      if (table) {
+        const convertedRows: { [key: string]: (string)[] } = {};
+        Object.entries(table.rows).forEach(([key, values]) => {
+          convertedRows[key] = values.map((value) =>
+            typeof value === "string" ? value : JSON.stringify(value)
+          );
+        });
+
+        setTableRows(convertedRows);
+        setParagraphIndex(paraIndex);
+        setTableIndex(tblIndex);
+        onTableModalOpen();
+        console.log("Table rows set for editing:", convertedRows);
+      } else {
+        console.error("Table not found.");
+      }
+    } else {
+      console.error("Invalid table index or no tables found in the paragraph.");
+    }
+  } else {
+    console.error("Invalid paragraph index or no paragraphs found in the article.");
+  }
+};
+
+
+  const saveTable = async (paragraphIndex:number, tableIndex:number) => {
+    try {
+      console.log(
+        "saveTable called with paragraphIndex:",
+        paragraphIndex,
+        "and tableIndex:",
+        tableIndex
+      );
+      if (article && paragraphIndex !== -1 && tableIndex !== -1) {
+        const updatedArticle = { ...article };
+        const paragraph = updatedArticle.paragraphs[paragraphIndex];
+        
+        if (paragraph && paragraph.tables && paragraph.tables[tableIndex]) {
+          console.log("Found table to update:", paragraph.tables[tableIndex]);
+          paragraph.tables[tableIndex].rows = tableRows;
+  
+          await axios.put(
+            `${VITE_BACKEND_URL}/api/articles/${title}`,
+            updatedArticle
+          );
+  
+          console.log("Table updated successfully");
+  
+          setArticle(updatedArticle);
+          setTableIndex(-1);
+          onTableModalClose();
+        } else {
+          throw new Error("Table not found.");
+        }
+      } else {
+        console.error("Invalid article or indices");
+      }
+    } catch (error) {
+      console.error("An error occurred while saving the table:", error);
+      setError("An error occurred while saving the table.");
+    }
+  };
+  
   useEffect(() => {
     const fetchArticle = async () => {
       console.log(title);
@@ -371,7 +381,7 @@ const Article = () => {
         </Button>
       </div>
 
-      <hr></hr>
+      <hr />
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-2">
           <Sidebar>
@@ -423,7 +433,6 @@ const Article = () => {
           </ModalContent>
         </Modal>
 
-        {/* Edit Paragraph Modal */}
         <Modal
           isOpen={isOpen}
           onOpenChange={(open) => (open ? onOpen() : onClose())}
@@ -465,7 +474,6 @@ const Article = () => {
           </ModalContent>
         </Modal>
 
-        {/* Edit Table Modal */}
         <Modal
           size="xl"
           isOpen={isTableModalOpen}
@@ -536,7 +544,10 @@ const Article = () => {
                 </Button>
               </ModalBody>
               <ModalFooter>
-                <Button color="primary" onPress={saveTable}>
+                <Button
+                  color="primary"
+                  onPress={() => saveTable(paragraphIndex, tableIndex)}
+                >
                   Save Table
                 </Button>
               </ModalFooter>
