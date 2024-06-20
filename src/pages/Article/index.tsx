@@ -21,6 +21,7 @@ import {
   TableBody,
   TableRow,
   TableCell,
+  Image,
 } from "@nextui-org/react";
 import Sidebar from "../../components/Sidebar";
 import { TrashIcon } from "@heroicons/react/16/solid";
@@ -160,10 +161,10 @@ const Article = () => {
           [Edit]
         </button>
         <p>{paragraph.text}</p>
-        <div className="flex">
+        <div className="flex justify-around">
           {paragraph.images &&
             paragraph.images.map((image, imgIndex) => (
-              <img
+              <Image
                 key={imgIndex}
                 src={image}
                 alt={paragraph.title}
