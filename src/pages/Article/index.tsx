@@ -95,12 +95,23 @@ const Article = () => {
   const deleteParagraph = async () => {
     try {
       if (article && paragraphIndex !== -1) {
+        const currentLevel = article.paragraphs[paragraphIndex].level;
+        let lastIndex = paragraphIndex + 1;
+
+        while (
+          lastIndex < article.paragraphs.length &&
+          article.paragraphs[lastIndex].level > currentLevel
+        ) {
+          lastIndex++;
+        }
+
         const updatedArticle = {
           ...article,
           paragraphs: article.paragraphs.filter(
-            (_, index) => index !== paragraphIndex
+            (_, index) => index < paragraphIndex || index >= lastIndex
           ),
         };
+
         await axios.put(
           `${VITE_BACKEND_URL}/api/articles/${title}`,
           updatedArticle
@@ -108,7 +119,6 @@ const Article = () => {
         setArticle(updatedArticle);
         setParagraphIndex(-1);
         onClose();
-        navigate("/");
       }
     } catch (error) {
       setError("An error occurred while deleting the paragraph.");
@@ -238,7 +248,7 @@ const Article = () => {
         removeWrapper
       >
         <TableHeader>
-          <TableColumn hidden>Key</TableColumn>
+          <TableColumn >{table.caption}</TableColumn>
           <TableColumn hidden>Values</TableColumn>
         </TableHeader>
         <TableBody>
