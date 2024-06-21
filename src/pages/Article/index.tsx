@@ -295,7 +295,6 @@ const Article = () => {
           setParagraphIndex(paraIndex);
           setTableIndex(tblIndex);
           onTableModalOpen();
-          console.log("Table rows set for editing:", table.rows);
         } else {
           console.error("Table not found.");
         }
@@ -353,7 +352,6 @@ const Article = () => {
       </Table>
     );
   };
-
 
   const saveTable = async (paragraphIndex: number, tableIndex: number) => {
     try {
@@ -543,13 +541,15 @@ const Article = () => {
             open ? onTableModalOpen() : onTableModalClose()
           }
         >
-          <ModalContent className="max-h-[80vh] overflow-y-auto">
+          <ModalContent className="max-h-[80vh] max-w-[90vw] overflow-y-auto">
             <>
               <ModalHeader className="flex flex-col gap-1">
                 Edit Table
               </ModalHeader>
               <ModalBody>
-              {renderEditableTable(tableRows)}
+                <div className="overflow-auto">
+                  {renderEditableTable(tableRows)}
+                </div>
                 <div className="flex mb-4">
                   <input
                     type="text"
