@@ -36,10 +36,12 @@ const Article = () => {
   const [paragraphText, setParagraphText] = useState<string>("");
   const [paragraphTitle, setParagraphTitle] = useState<string>("");
   const [tableIndex, setTableIndex] = useState<number>(-1);
-  const [tableRows, setTableRows] = useState<{ [key: string]: string[] }>({});
   const [newRowKey, setNewRowKey] = useState("");
   const [newRowValue, setNewRowValue] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [tableRows, setTableRows] = useState<{
+    [key: string]: (string | ITable)[];
+  }>({});
 
   const navigate = useNavigate();
   const {
@@ -249,7 +251,7 @@ const Article = () => {
         removeWrapper
       >
         <TableHeader>
-          <TableColumn >{table.caption}</TableColumn>
+          <TableColumn>{table.caption}</TableColumn>
           <TableColumn hidden>Values</TableColumn>
         </TableHeader>
         <TableBody>
@@ -273,38 +275,87 @@ const Article = () => {
   };
 
   const handleEditTable = (paraIndex: number, tblIndex: number) => {
-  if (article && article.paragraphs && article.paragraphs.length > paraIndex && paraIndex !== -1) {
-    const paragraph = article.paragraphs[paraIndex];
+    if (
+      article &&
+      article.paragraphs &&
+      article.paragraphs.length > paraIndex &&
+      paraIndex !== -1
+    ) {
+      const paragraph = article.paragraphs[paraIndex];
 
-    if (paragraph.tables && paragraph.tables.length > tblIndex && tblIndex !== -1) {
-      const table = paragraph.tables[tblIndex];
+      if (
+        paragraph.tables &&
+        paragraph.tables.length > tblIndex &&
+        tblIndex !== -1
+      ) {
+        const table = paragraph.tables[tblIndex];
 
-      if (table) {
-        const convertedRows: { [key: string]: (string)[] } = {};
-        Object.entries(table.rows).forEach(([key, values]) => {
-          convertedRows[key] = values.map((value) =>
-            typeof value === "string" ? value : JSON.stringify(value)
-          );
-        });
-
-        setTableRows(convertedRows);
-        setParagraphIndex(paraIndex);
-        setTableIndex(tblIndex);
-        onTableModalOpen();
-        console.log("Table rows set for editing:", convertedRows);
+        if (table) {
+          setTableRows(table.rows);
+          setParagraphIndex(paraIndex);
+          setTableIndex(tblIndex);
+          onTableModalOpen();
+          console.log("Table rows set for editing:", table.rows);
+        } else {
+          console.error("Table not found.");
+        }
       } else {
-        console.error("Table not found.");
+        console.error(
+          "Invalid table index or no tables found in the paragraph."
+        );
       }
     } else {
-      console.error("Invalid table index or no tables found in the paragraph.");
+      console.error(
+        "Invalid paragraph index or no paragraphs found in the article."
+      );
     }
-  } else {
-    console.error("Invalid paragraph index or no paragraphs found in the article.");
-  }
-};
+  };
+
+  const renderEditableTable = (rows: {
+    [key: string]: (string | ITable)[];
+  }) => {
+    return (
+      <Table
+        aria-label="Editable Table"
+        className="my-5 bg-gray-100 border-slate-500 border-2"
+        removeWrapper
+      >
+        <TableHeader>
+          <TableColumn>Key</TableColumn>
+          <TableColumn>Values</TableColumn>
+          <TableColumn>Action</TableColumn>
+        </TableHeader>
+        <TableBody>
+          {Object.entries(rows).map(([key, values]) => (
+            <TableRow key={key}>
+              <TableCell>{key}</TableCell>
+              <TableCell>
+                {values.map((value, i) => (
+                  <div key={i}>
+                    {typeof value === "string"
+                      ? value
+                      : renderEditableTable((value as ITable).rows)}
+                  </div>
+                ))}
+              </TableCell>
+              <TableCell>
+                <Button
+                  color="danger"
+                  variant="light"
+                  onPress={() => deleteTableRow(key)}
+                >
+                  Delete
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  };
 
 
-  const saveTable = async (paragraphIndex:number, tableIndex:number) => {
+  const saveTable = async (paragraphIndex: number, tableIndex: number) => {
     try {
       console.log(
         "saveTable called with paragraphIndex:",
@@ -315,18 +366,18 @@ const Article = () => {
       if (article && paragraphIndex !== -1 && tableIndex !== -1) {
         const updatedArticle = { ...article };
         const paragraph = updatedArticle.paragraphs[paragraphIndex];
-        
+
         if (paragraph && paragraph.tables && paragraph.tables[tableIndex]) {
           console.log("Found table to update:", paragraph.tables[tableIndex]);
           paragraph.tables[tableIndex].rows = tableRows;
-  
+
           await axios.put(
             `${VITE_BACKEND_URL}/api/articles/${title}`,
             updatedArticle
           );
-  
+
           console.log("Table updated successfully");
-  
+
           setArticle(updatedArticle);
           setTableIndex(-1);
           onTableModalClose();
@@ -341,7 +392,7 @@ const Article = () => {
       setError("An error occurred while saving the table.");
     }
   };
-  
+
   useEffect(() => {
     const fetchArticle = async () => {
       console.log(title);
@@ -498,38 +549,7 @@ const Article = () => {
                 Edit Table
               </ModalHeader>
               <ModalBody>
-                <Table
-                  aria-label="Editable Table"
-                  className="my-5 bg-gray-100 border-slate-500 border-2"
-                  removeWrapper
-                >
-                  <TableHeader>
-                    <TableColumn>Key</TableColumn>
-                    <TableColumn>Values</TableColumn>
-                    <TableColumn>Action</TableColumn>
-                  </TableHeader>
-                  <TableBody>
-                    {Object.entries(tableRows).map(([key, values]) => (
-                      <TableRow key={key}>
-                        <TableCell>{key}</TableCell>
-                        <TableCell>
-                          {values.map((value, i) => (
-                            <div key={i}>{value}</div>
-                          ))}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            color="danger"
-                            variant="light"
-                            onPress={() => deleteTableRow(key)}
-                          >
-                            Delete
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              {renderEditableTable(tableRows)}
                 <div className="flex mb-4">
                   <input
                     type="text"
