@@ -191,57 +191,6 @@ const Article = () => {
     ));
   };
 
-  const renderIndex = (paragraphs: IParagraph[]) => {
-    let currentIndex: number[] = [];
-    const indices: { index: string; title: string; id: string }[] = [];
-
-    const outputParagraphs = paragraphs.map((paragraph) => ({
-      ...paragraph,
-    }));
-
-    if (
-      outputParagraphs[0].title === null ||
-      outputParagraphs[0].title === ""
-    ) {
-      outputParagraphs[0].title = "(top)";
-    }
-
-    outputParagraphs.forEach((paragraph, idx) => {
-      const level = paragraph.level - 1;
-
-      while (currentIndex.length > level) {
-        currentIndex.pop();
-      }
-
-      if (currentIndex.length === level) {
-        currentIndex[level - 1]++;
-      } else {
-        currentIndex.push(1);
-      }
-
-      const currentIndexStr = currentIndex.join(".");
-      indices.push({
-        index: currentIndexStr,
-        title: paragraph.title,
-        id: `paragraph-${idx}`,
-      });
-    });
-    return (
-      <ul className="list-none pl-0">
-        {indices.map((item, idx) => (
-          <li key={idx} className="mb-2">
-            <a
-              href={`#${item.id}`}
-              className="text-blue-700 hover:underline ml-2"
-            >
-              {item.index} {item.title}
-            </a>
-          </li>
-        ))}
-      </ul>
-    );
-  };
-
   const renderTable = (table: ITable) => {
     if (!table || !Object.keys(table.rows).length) return null;
     return (
@@ -444,9 +393,9 @@ const Article = () => {
       <hr />
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-2">
-          <Sidebar>
-            {article && <div>{renderIndex(article.paragraphs)}</div>}
-          </Sidebar>
+          {article && article.paragraphs && (
+            <Sidebar paragraphs={article.paragraphs} />
+          )}
         </div>
         <div className="col-span-6 flex flex-col ml-2">
           {article ? (

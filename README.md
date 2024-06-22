@@ -7,7 +7,7 @@ The Frontend was made in React 18.0, Typescript 5.4.5 and tailwind 3.4.3, using:
 clone your OpenWikipedia backend repository using the following command:
 1. **Clone the repository**:
    ```bash
-   git clone git@github.com:francescoflores/OpenWikipediaFE.git
+   git clone git@github.com:francescoflores/OpenWikipediaReact.git
 ---
 
 2. **Set Up Nodejs:**:
