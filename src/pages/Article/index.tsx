@@ -76,18 +76,26 @@ const Article = () => {
     onDeleteModalOpen();
   };
 
+  const updateArticle = async (updatedArticle: IArticle) => {
+    try {
+      await axios.put(
+        `${VITE_BACKEND_URL}/api/articles/${title}`,
+        updatedArticle
+      );
+      setArticle(updatedArticle);
+      setParagraphIndex(-1);
+    } catch (error) {
+      setError("An error occurred while updating the article.");
+    }
+  };
+
   const saveParagraph = async () => {
     try {
       if (article && paragraphIndex !== -1) {
         const updatedArticle = { ...article };
         updatedArticle.paragraphs[paragraphIndex].text = paragraphText;
         updatedArticle.paragraphs[paragraphIndex].title = paragraphTitle;
-        await axios.put(
-          `${VITE_BACKEND_URL}/api/articles/${title}`,
-          updatedArticle
-        );
-        setArticle(updatedArticle);
-        setParagraphIndex(-1);
+        updateArticle(updatedArticle);
         onClose();
       }
     } catch (error) {
@@ -115,12 +123,7 @@ const Article = () => {
           ),
         };
 
-        await axios.put(
-          `${VITE_BACKEND_URL}/api/articles/${title}`,
-          updatedArticle
-        );
-        setArticle(updatedArticle);
-        setParagraphIndex(-1);
+        updateArticle(updatedArticle);
         onClose();
       }
     } catch (error) {
@@ -317,16 +320,7 @@ const Article = () => {
         if (paragraph && paragraph.tables && paragraph.tables[tableIndex]) {
           console.log("Found table to update:", paragraph.tables[tableIndex]);
           paragraph.tables[tableIndex].rows = tableRows;
-
-          await axios.put(
-            `${VITE_BACKEND_URL}/api/articles/${title}`,
-            updatedArticle
-          );
-
-          console.log("Table updated successfully");
-
-          setArticle(updatedArticle);
-          setTableIndex(-1);
+          updateArticle(updatedArticle);
           onTableModalClose();
         } else {
           throw new Error("Table not found.");
