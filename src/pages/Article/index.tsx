@@ -60,11 +60,9 @@ const Article = () => {
       await axios.delete(`${VITE_BACKEND_URL}/api/articles/${title}`);
       setArticle(null);
       onDeleteModalClose();
-      console.log("article deleted");
       navigate("/");
     } catch (error: any) {
       if (error.response && error.response.data) {
-        console.log("error");
         setError(error.response.data.error);
       } else {
         setError("An error occurred while deleting the article.");
@@ -307,18 +305,11 @@ const Article = () => {
 
   const saveTable = async (paragraphIndex: number, tableIndex: number) => {
     try {
-      console.log(
-        "saveTable called with paragraphIndex:",
-        paragraphIndex,
-        "and tableIndex:",
-        tableIndex
-      );
       if (article && paragraphIndex !== -1 && tableIndex !== -1) {
         const updatedArticle = { ...article };
         const paragraph = updatedArticle.paragraphs[paragraphIndex];
 
         if (paragraph && paragraph.tables && paragraph.tables[tableIndex]) {
-          console.log("Found table to update:", paragraph.tables[tableIndex]);
           paragraph.tables[tableIndex].rows = tableRows;
           updateArticle(updatedArticle);
           onTableModalClose();
@@ -336,7 +327,6 @@ const Article = () => {
 
   useEffect(() => {
     const fetchArticle = async () => {
-      console.log(title);
       try {
         const response = await axios.get<IArticle>(
           `${VITE_BACKEND_URL}/api/articles/${title}`
@@ -361,7 +351,7 @@ const Article = () => {
       try {
         await axios.post(`${VITE_BACKEND_URL}/api/articles/${title}/counter`);
       } catch (error: any) {
-        console.log("An error occurred while logging the visit");
+        console.error("An error occurred while logging the visit");
       }
     };
 
@@ -371,7 +361,7 @@ const Article = () => {
   return (
     <>
       <div className="flex  my-2 justify-center">
-        <h2 className="font-bold text-4xl text-center">{article?.title}</h2>
+        <h2 className="font-bold text-4xl text-center">{article?.title.replace("_", " ")}</h2>
         <Button
           color="danger"
           variant="bordered"
@@ -403,7 +393,7 @@ const Article = () => {
             Object.keys(article.infoTable.rows).length > 0 && (
               <div className="overflow-auto">
                 <h2 className="text-center font-bold -mb-3 text-lg">
-                  {article.title}
+                  {article.title.replace("_"," ")}
                 </h2>
                 {renderTable(article.infoTable)}
               </div>
